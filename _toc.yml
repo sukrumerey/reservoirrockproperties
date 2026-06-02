@@ -3,3 +3,4 @@ root: intro
 
 chapters:
 - file: drilling
+- file: notebooks/ROP_Prediction
