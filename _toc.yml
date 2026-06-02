@@ -4,4 +4,3 @@ root: intro
 chapters:
 - file: drilling
 - file: notebooks
-- file: Reservoir
