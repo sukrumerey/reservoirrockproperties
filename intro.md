@@ -11,4 +11,4 @@ This website contains:
 - Underground Hydrogen Storage
 - Machine Learning Applications
 
-Prepared by Şükrü Merey...
+Sukru Merey
