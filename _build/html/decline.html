@@ -428,48 +428,186 @@ or see <a class="reference external" href="https://myst-parser.readthedocs.io/en
 For example, here’s some sample Matplotlib code:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">rcParams</span><span class="p">,</span> <span class="n">cycler</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Reservoir Fluid Zones &amp; Pressure Gradient Example code written by Sukru Merey</span>
+<span class="c1"># 16/05/2026</span>
+<span class="c1"># contact: sukrumerey@gmail.com</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Reservoir fluid pressure gradients are measured using wireline pressure gauges, allowing engineers to determine </span>
+<span class="sd">the depths of the gas–oil contact (GOC) and water–oil contact (WOC). </span>
+<span class="sd">The following is an example (from Example on Page 6 of Sanni, M. (2019). Petroleum Engineering. Principles, Calculations and Workflows. Wiley) </span>
+<span class="sd">illustrating these measurements and how GOC and WOC depths are calculated.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># -----------------------------</span>
+<span class="c1"># GIVEN TEST DATA (INPUT DATA)</span>
+<span class="c1"># -----------------------------</span>
+<span class="n">z_gas</span><span class="p">,</span> <span class="n">P_gas_pt</span><span class="p">,</span><span class="n">rho_gas</span> <span class="o">=</span> <span class="mf">6967.0</span><span class="p">,</span> <span class="mf">3765.47</span><span class="p">,</span><span class="mf">14.4</span> <span class="c1"># TVDSS, ft; pressure, psia; fluid density, lb/ft3</span>
+<span class="n">z_oil</span><span class="p">,</span> <span class="n">P_oil_pt</span><span class="p">,</span><span class="n">rho_oil</span> <span class="o">=</span> <span class="mf">7624.0</span><span class="p">,</span> <span class="mf">3896.00</span><span class="p">,</span><span class="mf">37.4</span>
+<span class="n">z_water</span><span class="p">,</span> <span class="n">P_water_pt</span><span class="p">,</span><span class="n">rho_water</span> <span class="o">=</span> <span class="mf">8936.0</span><span class="p">,</span> <span class="mf">4432.64</span><span class="p">,</span><span class="mf">64.8</span>
+
+
+<span class="c1"># Pressure Gradients</span>
+<span class="n">g_gas</span> <span class="o">=</span> <span class="mf">0.052</span><span class="o">*</span><span class="n">rho_gas</span><span class="o">*</span><span class="mf">0.13368055787372</span> <span class="c1"># psi/ft</span>
+<span class="n">g_oil</span> <span class="o">=</span> <span class="mf">0.052</span><span class="o">*</span><span class="n">rho_oil</span><span class="o">*</span><span class="mf">0.13368055787372</span>
+<span class="n">g_water</span> <span class="o">=</span> <span class="mf">0.052</span><span class="o">*</span><span class="n">rho_water</span><span class="o">*</span><span class="mf">0.13368055787372</span>
+
+<span class="c1"># Intercepts</span>
+<span class="n">C_gas</span> <span class="o">=</span> <span class="n">P_gas_pt</span> <span class="o">-</span> <span class="n">g_gas</span> <span class="o">*</span> <span class="n">z_gas</span>
+<span class="n">C_oil</span> <span class="o">=</span> <span class="n">P_oil_pt</span> <span class="o">-</span> <span class="n">g_oil</span> <span class="o">*</span> <span class="n">z_oil</span>
+<span class="n">C_water</span> <span class="o">=</span> <span class="n">P_water_pt</span> <span class="o">-</span> <span class="n">g_water</span> <span class="o">*</span> <span class="n">z_water</span>
+
+<span class="c1"># Contact Depths in TVDSS ft</span>
+<span class="n">z_GOC</span> <span class="o">=</span> <span class="p">(</span><span class="n">C_oil</span> <span class="o">-</span> <span class="n">C_gas</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">g_gas</span> <span class="o">-</span> <span class="n">g_oil</span><span class="p">)</span> 
+<span class="n">z_WOC</span> <span class="o">=</span> <span class="p">(</span><span class="n">C_water</span> <span class="o">-</span> <span class="n">C_oil</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">g_oil</span> <span class="o">-</span> <span class="n">g_water</span><span class="p">)</span>
+
+<span class="c1"># -----------------------------</span>
+<span class="c1"># ZONES</span>
+<span class="c1"># -----------------------------</span>
+<span class="n">z_gas_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">6500</span><span class="p">,</span> <span class="n">z_GOC</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">z_oil_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">z_GOC</span><span class="p">,</span> <span class="n">z_WOC</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">z_water_range</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">z_WOC</span><span class="p">,</span> <span class="mi">9600</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Pressures</span>
+<span class="n">P_gas</span> <span class="o">=</span> <span class="n">g_gas</span> <span class="o">*</span> <span class="n">z_gas_range</span> <span class="o">+</span> <span class="n">C_gas</span>
+<span class="n">P_oil</span> <span class="o">=</span> <span class="n">g_oil</span> <span class="o">*</span> <span class="n">z_oil_range</span> <span class="o">+</span> <span class="n">C_oil</span>
+<span class="n">P_water</span> <span class="o">=</span> <span class="n">g_water</span> <span class="o">*</span> <span class="n">z_water_range</span> <span class="o">+</span> <span class="n">C_water</span>
+
+<span class="c1"># -----------------------------</span>
+<span class="c1"># PLOT</span>
+<span class="c1"># -----------------------------</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">P_gas</span><span class="p">,</span> <span class="n">z_gas_range</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">P_oil</span><span class="p">,</span> <span class="n">z_oil_range</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">P_water</span><span class="p">,</span> <span class="n">z_water_range</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Points</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">P_gas_pt</span><span class="p">],</span> <span class="p">[</span><span class="n">z_gas</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">P_oil_pt</span><span class="p">],</span> <span class="p">[</span><span class="n">z_oil</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="n">P_water_pt</span><span class="p">],</span> <span class="p">[</span><span class="n">z_water</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+<span class="c1"># Contacts</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">z_GOC</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">z_WOC</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+
+<span class="c1"># -----------------------------</span>
+<span class="c1"># FORMULAS ON FIGURE</span>
+<span class="c1"># -----------------------------</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4290</span><span class="p">,</span> <span class="mi">6900</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;P = </span><span class="si">{</span><span class="n">g_gas</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">z + </span><span class="si">{</span><span class="n">C_gas</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4290</span><span class="p">,</span> <span class="mi">7600</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;P = </span><span class="si">{</span><span class="n">g_oil</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">z + </span><span class="si">{</span><span class="n">C_oil</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4290</span><span class="p">,</span> <span class="mi">8500</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;P = </span><span class="si">{</span><span class="n">g_water</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">z + </span><span class="si">{</span><span class="n">C_water</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">z_GOC</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;GOC = </span><span class="si">{</span><span class="n">z_GOC</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ft&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">4000</span><span class="p">,</span> <span class="n">z_WOC</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;WOC = </span><span class="si">{</span><span class="n">z_WOC</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ft&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+<span class="c1"># Zone labels</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">3580</span><span class="p">,</span> <span class="mi">6900</span><span class="p">,</span> <span class="s2">&quot;Gas zone&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">3580</span><span class="p">,</span> <span class="mi">7600</span><span class="p">,</span> <span class="s2">&quot;Oil zone&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">3580</span><span class="p">,</span> <span class="mi">8600</span><span class="p">,</span> <span class="s2">&quot;Water zone&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+
+<span class="c1"># Axes</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Pressure (psia)&quot;</span><span class="p">,</span><span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Depth (TVDSSft)&quot;</span><span class="p">,</span><span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Reservoir Fluid Zones (with equations)&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">3550</span><span class="p">,</span> <span class="mi">4800</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">9500</span><span class="p">,</span> <span class="mi">6500</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># -----------------------------</span>
+<span class="c1"># RESULTS</span>
+<span class="c1"># -----------------------------</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;TVDSS_ft&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">z_gas</span><span class="p">,</span> <span class="n">z_oil</span><span class="p">,</span> <span class="n">z_water</span><span class="p">],</span>
+    <span class="s1">&#39;Formation_pressure_psia&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">P_gas_pt</span><span class="p">,</span><span class="n">P_oil_pt</span><span class="p">,</span><span class="n">P_water_pt</span><span class="p">],</span>
+    <span class="s1">&#39;Fluid&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Gas&#39;</span><span class="p">,</span> <span class="s1">&#39;Oil&#39;</span><span class="p">,</span> <span class="s1">&#39;Water&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;Fluid_density_lb_per_ft3&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">rho_gas</span><span class="p">,</span> <span class="n">rho_oil</span><span class="p">,</span> <span class="n">rho_water</span><span class="p">],</span>
+    <span class="s1">&#39;Fluid_gradient_psi_per_ft&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">g_gas</span><span class="p">,</span><span class="n">g_oil</span><span class="p">,</span><span class="n">g_water</span><span class="p">],</span>
+    <span class="s1">&#39;C_fluid_psia&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">C_gas</span><span class="p">,</span> <span class="n">C_oil</span><span class="p">,</span> <span class="n">C_water</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># title with units</span>
+<span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;TVDSS (ft)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Formation Pressure (psia)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Fluid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Fluid Density (lb/ft³)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Fluid Gradient (psi/ft)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;C_fluid (psia)&#39;</span>
+<span class="p">]</span>
+
+<span class="n">df</span>
 </pre></div>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;contextlib.ExitStack at 0x266b4eac980&gt;
-</pre></div>
-</div>
-</div>
-</div>
-<div class="cell docutils container">
-<div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fixing random state for reproducibility</span>
-<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">19680801</span><span class="p">)</span>
+<img alt="_images/12419d3badbb152e743282036604dff6e73e576192a04428aff88f7bde1f0933.png" src="_images/12419d3badbb152e743282036604dff6e73e576192a04428aff88f7bde1f0933.png" />
+<div class="output text_html"><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
-<span class="n">N</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">+</span> <span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-<span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">coolwarm</span>
-<span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.prop_cycle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cycler</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">cmap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">)))</span>
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
 
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.lines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Line2D</span>
-<span class="n">custom_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">cmap</span><span class="p">(</span><span class="mf">0.</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
-                <span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">cmap</span><span class="p">(</span><span class="mf">.5</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
-                <span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">cmap</span><span class="p">(</span><span class="mf">1.</span><span class="p">),</span> <span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">)]</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">lines</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">custom_lines</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;Cold&#39;</span><span class="p">,</span> <span class="s1">&#39;Medium&#39;</span><span class="p">,</span> <span class="s1">&#39;Hot&#39;</span><span class="p">]);</span>
-</pre></div>
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>TVDSS (ft)</th>
+      <th>Formation Pressure (psia)</th>
+      <th>Fluid</th>
+      <th>Fluid Density (lb/ft³)</th>
+      <th>Fluid Gradient (psi/ft)</th>
+      <th>C_fluid (psia)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>6967.0</td>
+      <td>3765.47</td>
+      <td>Gas</td>
+      <td>14.4</td>
+      <td>0.100100</td>
+      <td>3068.073288</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>7624.0</td>
+      <td>3896.00</td>
+      <td>Oil</td>
+      <td>37.4</td>
+      <td>0.259982</td>
+      <td>1913.897621</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>8936.0</td>
+      <td>4432.64</td>
+      <td>Water</td>
+      <td>64.8</td>
+      <td>0.450450</td>
+      <td>407.418730</td>
+    </tr>
+  </tbody>
+</table>
+</div></div></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="_images/a45d8db2ca1b3b217e639156a5a5790dd57060424028f8d38af552cabbca61fb.png" src="_images/a45d8db2ca1b3b217e639156a5a5790dd57060424028f8d38af552cabbca61fb.png" />
-</div>
-</div>
-<p>There is a lot more that you can do with outputs (such as including interactive outputs)
-with your book. For more information about this, see <a class="reference external" href="https://jupyterbook.org">the Jupyter Book documentation</a></p>
 </section>
 </section>
 
