@@ -1,14 +1,9 @@
-# Petroleum Engineering Education Center
+# Reservoir Rock Properties
 
-Welcome to the Petroleum Engineering Education Center.
+Welcome to the Reservoir Rock Properties Course
 
 This website contains:
 
-- Drilling Engineering
-- Reservoir Engineering
-- Production Engineering
-- Geothermal Energy
-- Underground Hydrogen Storage
-- Machine Learning Applications
+- Reservoir Rock Properties
 
 Sukru Merey....
