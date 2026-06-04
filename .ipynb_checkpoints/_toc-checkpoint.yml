@@ -1,7 +1,0 @@
-format: jb-book
-root: intro
-
-chapters:
-- file: drilling
-- file: notebooks
-- file: decline
